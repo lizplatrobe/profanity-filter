@@ -1,98 +1,165 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Profanity } from "@2toad/profanity";
+import React, { useMemo, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const filter = new Profanity();
 
-export default function HomeScreen() {
+type Severity = "none" | "mild" | "high";
+
+export default function Index() {
+  const [reflection, setReflection] = useState("");
+
+  const analysis = useMemo(() => {
+    const trimmed = reflection.trim();
+
+    if (!trimmed) {
+      return {
+        hasProfanity: false,
+        severity: "none" as Severity,
+        statusText: "Start typing to test the classroom-safe filter.",
+        cleanedText: "",
+        canSubmit: false,
+      };
+    }
+
+    const hasProfanity = filter.exists(trimmed);
+    const cleanedText = hasProfanity ? filter.censor(trimmed) : trimmed;
+
+    let severity: Severity = "none";
+    let statusText = "This text is appropriate for submission.";
+
+    if (hasProfanity) {
+      const wordCount = trimmed.split(/\s+/).length;
+      const censorCount = (cleanedText.match(/\*/g) || []).length;
+
+      if (wordCount <= 6 && censorCount <= 6) {
+        severity = "mild";
+        statusText =
+          "Mild inappropriate language detected. Please improve your wording.";
+      } else {
+        severity = "high";
+        statusText =
+          "Stronger inappropriate language detected. Please revise before submitting.";
+      }
+    }
+
+    return {
+      hasProfanity,
+      severity,
+      statusText,
+      cleanedText,
+      canSubmit: trimmed.length > 0 && !hasProfanity,
+    };
+  }, [reflection]);
+
+  const handleSubmit = () => {
+    if (!reflection.trim()) {
+      Alert.alert("Empty reflection", "Please enter some text first.");
+      return;
+    }
+
+    if (analysis.hasProfanity) {
+      Alert.alert(
+        "Submission blocked",
+        "Please remove inappropriate language before submitting.",
+      );
+      return;
+    }
+
+    Alert.alert("Submitted", "Your reflection was accepted.");
+    setReflection("");
+  };
+
+  const severityStyle =
+    analysis.severity === "none"
+      ? styles.goodBox
+      : analysis.severity === "mild"
+        ? styles.mildBox
+        : styles.highBox;
+
+  const severityLabel =
+    analysis.severity === "none"
+      ? "APPROPRIATE"
+      : analysis.severity === "mild"
+        ? "MILD WARNING"
+        : "HIGH WARNING";
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView contentContainerStyle={styles.container}>
+      <StatusBar barStyle="dark-content" />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={styles.title}>STEMM Lab Moderation Prototype</Text>
+      <Text style={styles.subtitle}>Intelligent classroom-safe text input</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Write your reflection..."
+        multiline
+        value={reflection}
+        onChangeText={setReflection}
+      />
+
+      <View style={[styles.statusBox, severityStyle]}>
+        <Text style={styles.statusLabel}>{severityLabel}</Text>
+        <Text>{analysis.statusText}</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Cleaned Preview</Text>
+      <View style={styles.previewBox}>
+        <Text>{analysis.cleanedText || "No preview yet."}</Text>
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          analysis.canSubmit ? styles.buttonEnabled : styles.buttonDisabled,
+        ]}
+        onPress={handleSubmit}
+      >
+        <Text style={styles.buttonText}>Submit</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { padding: 20 },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 5 },
+  subtitle: { marginBottom: 20 },
+  input: {
+    borderWidth: 1,
+    padding: 10,
+    minHeight: 120,
+    marginBottom: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  statusBox: {
+    padding: 10,
+    marginBottom: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  goodBox: { backgroundColor: "#d4edda" },
+  mildBox: { backgroundColor: "#fff3cd" },
+  highBox: { backgroundColor: "#f8d7da" },
+  statusLabel: { fontWeight: "bold" },
+  previewBox: {
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 10,
   },
+  sectionTitle: { fontWeight: "bold", marginTop: 10 },
+  button: {
+    padding: 15,
+    alignItems: "center",
+  },
+  buttonEnabled: { backgroundColor: "blue" },
+  buttonDisabled: { backgroundColor: "grey" },
+  buttonText: { color: "white" },
 });
