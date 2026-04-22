@@ -97,7 +97,7 @@ export default function Index() {
     <ScrollView contentContainerStyle={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      <Text style={styles.title}>STEMM Lab Moderation Prototype</Text>
+      <Text style={styles.title}>CSE3MAD Assessment 3 - Prototype</Text>
       <Text style={styles.subtitle}>Intelligent classroom-safe text input</Text>
 
       <TextInput
