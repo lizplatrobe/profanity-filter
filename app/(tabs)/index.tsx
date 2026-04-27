@@ -133,7 +133,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 5 },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 5, marginTop: 20 },
   subtitle: { marginBottom: 20 },
   input: {
     borderWidth: 1,
@@ -145,9 +145,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  goodBox: { backgroundColor: "#d4edda" },
-  mildBox: { backgroundColor: "#fff3cd" },
-  highBox: { backgroundColor: "#f8d7da" },
+  goodBox: { backgroundColor: "#86f9a1" },
+  mildBox: { backgroundColor: "#fa941e" },
+  highBox: { backgroundColor: "#fb1f1f" },
   statusLabel: { fontWeight: "bold" },
   previewBox: {
     borderWidth: 1,
