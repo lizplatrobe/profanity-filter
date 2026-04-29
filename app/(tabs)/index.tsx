@@ -1,4 +1,4 @@
-import { Profanity } from "@2toad/profanity";
+// Import React and required React Native components
 import React, { useMemo, useState } from "react";
 import {
   Alert,
@@ -11,16 +11,24 @@ import {
   View,
 } from "react-native";
 
+// Import profanity filtering package
+import { Profanity } from "@2toad/profanity";
+
+// Create profanity filter instance using the package's built-in word list
 const filter = new Profanity();
 
+// Defines the possible warning levels for the prototype
 type Severity = "none" | "mild" | "high";
 
 export default function Index() {
+  // Stores the reflection typed by the user
   const [reflection, setReflection] = useState("");
 
+  // Re-analyses the reflection only when the text changes
   const analysis = useMemo(() => {
     const trimmed = reflection.trim();
 
+    // If the user has not typed anything, show a neutral starting message
     if (!trimmed) {
       return {
         hasProfanity: false,
@@ -30,17 +38,22 @@ export default function Index() {
         canSubmit: false,
       };
     }
-
+    // Checks whether the typed text contains inappropriate language
     const hasProfanity = filter.exists(trimmed);
+
+    // Creates a censored preview if profanity is found
     const cleanedText = hasProfanity ? filter.censor(trimmed) : trimmed;
 
     let severity: Severity = "none";
     let statusText = "This text is appropriate for submission.";
 
+    // Counts the number of words typed by the user
     if (hasProfanity) {
       const wordCount = trimmed.split(/\s+/).length;
+      // Counts the number of censor symbols in the cleaned version
       const censorCount = (cleanedText.match(/\*/g) || []).length;
 
+      // Simple prototype logic for mild vs high severity
       if (wordCount <= 6 && censorCount <= 6) {
         severity = "mild";
         statusText =
@@ -52,6 +65,7 @@ export default function Index() {
       }
     }
 
+    // Returns all values needed by the interface
     return {
       hasProfanity,
       severity,
@@ -62,11 +76,14 @@ export default function Index() {
   }, [reflection]);
 
   const handleSubmit = () => {
+    // Prevents empty reflections from being submitted
+
     if (!reflection.trim()) {
       Alert.alert("Empty reflection", "Please enter some text first.");
       return;
     }
 
+    // Blocks submission if inappropriate language is detected
     if (analysis.hasProfanity) {
       Alert.alert(
         "Submission blocked",
@@ -74,11 +91,12 @@ export default function Index() {
       );
       return;
     }
-
+    // Accepts the reflection if it passes the filter
     Alert.alert("Submitted", "Your reflection was accepted.");
     setReflection("");
   };
 
+  // Chooses the status box colour based on severity level
   const severityStyle =
     analysis.severity === "none"
       ? styles.goodBox
@@ -86,6 +104,7 @@ export default function Index() {
         ? styles.mildBox
         : styles.highBox;
 
+  // Chooses the warning label shown to the user
   const severityLabel =
     analysis.severity === "none"
       ? "APPROPRIATE"
@@ -105,19 +124,22 @@ export default function Index() {
         placeholder="Write your reflection..."
         multiline
         value={reflection}
-        onChangeText={setReflection}
+        onChangeText={setReflection} // Updates text and triggers real-time analysis
       />
 
+      {/* Displays the current moderation result */}
       <View style={[styles.statusBox, severityStyle]}>
         <Text style={styles.statusLabel}>{severityLabel}</Text>
         <Text>{analysis.statusText}</Text>
       </View>
 
       <Text style={styles.sectionTitle}>Cleaned Preview</Text>
+      {/* Shows the censored version of the text */}
       <View style={styles.previewBox}>
         <Text>{analysis.cleanedText || "No preview yet."}</Text>
       </View>
 
+      {/* Submit button is visually enabled or disabled based on analysis */}
       <TouchableOpacity
         style={[
           styles.button,
@@ -131,6 +153,7 @@ export default function Index() {
   );
 }
 
+// Basic styling for the prototype interface
 const styles = StyleSheet.create({
   container: { padding: 20 },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 5, marginTop: 20 },
