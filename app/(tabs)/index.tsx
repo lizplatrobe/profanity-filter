@@ -50,6 +50,7 @@ export default function Index() {
     // Counts the number of words typed by the user
     if (hasProfanity) {
       const wordCount = trimmed.split(/\s+/).length;
+
       // Counts the number of censor symbols in the cleaned version
       const censorCount = (cleanedText.match(/\*/g) || []).length;
 
